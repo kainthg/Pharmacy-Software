@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ali Medical Store - Management System</title>
+  <link rel="stylesheet" href="style.css">
+  
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>💊 Ali Medical Store</h2>
+      <p style="margin-bottom: 20px; color: #718096; font-size: 14px;">Login to Management System</p>
+      <input type="text" id="loginUser" placeholder="Username (admin / cashier)" onkeydown="if(event.key === 'Enter') document.getElementById('loginPass').focus()">
+      <input type="password" id="loginPass" placeholder="Password (123)" onkeydown="if(event.key === 'Enter') login()">
+      <button onclick="login()">Login</button>
+      <p id="loginError"></p>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-screen" class="hidden" style="display: flex; width: 100%;">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo-box">
+        <div class="logo-inner">
+          <div class="logo-photo"><span>💊</span></div>
+          <div class="logo-text">
+            <h2>ALI</h2>
+            <span>Medical-Store</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-category">Main</div>
+      <div class="menu-item active" id="menu-dashboard" onclick="showPage('dashboard')">📊 Dashboard</div>
+      <div class="menu-item" id="menu-billing" onclick="showPage('billing')">🧾 Billing (POS)</div>
+      
+      <div class="sidebar-category">Data</div>
+      <div class="menu-item" id="menu-inventory" onclick="showPage('inventory')">📦 Inventory & Data</div>
+      
+      <div class="sidebar-category">Reports</div>
+      <div class="menu-item" id="menu-reports" onclick="showPage('reports')">📈 Reports & Alerts</div>
+      
+      <div class="sidebar-category" style="margin-top: auto;">System</div>
+      <div class="menu-item" id="menu-config" onclick="showPage('config')">⚙️ Configuration</div>
+      <div class="menu-item" id="menu-info" onclick="showPage('info')">ℹ️ App Info</div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      
+      <!-- DASHBOARD PAGE -->
+      <div id="page-dashboard">
+        <div class="header">
+          <h1>Dashboard</h1>
+          <div class="profile">
+            <span id="user-display">👤 Admin</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+        <div class="cards-container">
+          <div class="card"><div class="card-icon">💊</div><h3>Total Items</h3><p id="dash-total-meds">0</p></div>
+          <div class="card"><div class="card-icon">⚠️</div><h3>Low Stock Items</h3><p id="dash-low-stock" class="danger-text">0</p></div>
+          <div class="card profit"><div class="card-icon">💰</div><h3>Total Profit</h3><p id="dash-profit">Rs. 0</p></div>
+        </div>
+      </div>
+
+      <!-- BILLING PAGE -->
+      <div id="page-billing" class="hidden">
+        <div class="header"><h1>Cash Sale / POS</h1></div>
+        <div class="billing-layout">
+          <div class="form-box" style="flex: 1; flex-direction: column; align-items: stretch;">
+            <h3 style="margin-bottom: 10px; color:#2d3748; font-weight: normal;">New Invoice</h3>
+            
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label>Search Customer (Phone/Name)</label>
+              <input type="text" id="billingCustSearch" placeholder="Type number..." onkeyup="searchCustomer()" autocomplete="off">
+              <div id="custSearchResults"></div>
+            </div>
+            
+            <div class="cust-info-box" id="custInfoBox">
+              <p>Customer: <span class="name" id="infoCustName"></span></p>
+              <p>Phone: <span id="infoCustPhone"></span></p>
+              <p>Special Discount: <span id="infoCustDiscount">0</span>%</p>
+              <button class="load-history-btn" onclick="loadLastBill()">🔄 Load Last Purchased Medicines</button>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label>Search Medicine</label>
+              <input type="text" id="billingSearchInput" placeholder="Type item name..." onkeyup="searchMedicine()" autocomplete="off">
+              <div id="searchResults"></div>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label>Quantity (Units)</label>
+              <input type="number" id="billingQty" value="1" min="1">
+            </div>
+            <button class="btn" onclick="addToBill()">➕ Add to Bill</button>
+          </div>
+
+          <div class="bill-section">
+            <h3 style="font-weight: normal;">Current Bill</h3>
+            <table>
+              <thead>
+                <tr><th>Item</th><th>Sale Price</th><th>Qty (Units)</th><th>Total</th><th>Action</th></tr>
+              </thead>
+              <tbody id="billTableBody"></tbody>
+            </table>
+            
+            <div class="total-area">
+              <div class="summary-row">
+                <span>Discount (%):</span>
+                <input type="number" id="discountInput" value="0" min="0" max="100" oninput="updateBillTable()" style="width: 80px; padding: 5px; text-align: right; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;">
+              </div>
+              <div class="summary-row"><span>Sub Total:</span><span>Rs. <span id="subTotal">0</span></span></div>
+              <div class="summary-row total"><span>Net Total:</span><span>Rs. <span id="grandTotal">0</span></span></div>
+              <button class="print-btn" onclick="printBill()">🖨️ Save & Print</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY & DATA PAGE (TABS WALA) -->
+      <div id="page-inventory" class="hidden">
+        <div class="header">
+          <h1>Inventory & Master Data</h1>
+          <div class="profile">
+            <span id="user-display-inv">👤 Admin</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+        
+        <!-- Top Tabs -->
+        <div class="top-tabs">
+          <button class="tab-btn active" onclick="openTab('inventory', 'tab-items', this)">💊 Items (Stock)</button>
+          <button class="tab-btn" onclick="openTab('inventory', 'tab-companies', this)">🏢 Companies</button>
+          <button class="tab-btn" onclick="openTab('inventory', 'tab-distributors', this)">🚚 Distributors</button>
+          <button class="tab-btn" onclick="openTab('inventory', 'tab-customers', this)">👥 Customers</button>
+        </div>
+
+        <!-- Tab 1: Inventory -->
+        <div id="tab-items" class="sub-section active">
+          <div class="form-box">
+            <div class="input-group"><label>Item Name</label><input type="text" id="medName" placeholder="e.g. Nims"></div>
+            <div class="input-group"><label>Distributor</label><select id="medDistributor" onchange="updateCompanyDropdown()"><option value="">-- Select --</option></select></div>
+            <div class="input-group"><label>Company</label><select id="medCompany"><option value="">-- Select --</option></select></div>
+            <div class="input-group"><label>Pur. Price (Box)</label><input type="number" id="medPurPrice" placeholder="e.g. 200"></div>
+            <div class="input-group"><label>Sale Price (Box)</label><input type="number" id="medSalePrice" placeholder="e.g. 250"></div>
+            <div class="input-group"><label>Units in 1 Box</label><input type="number" id="medUnitsPerBox" placeholder="e.g. 20"></div>
+            <div class="input-group"><label>Total Stock (Boxes)</label><input type="number" id="medStock" placeholder="e.g. 10"></div>
+            
+            <!-- MFG aur EXPIRY DATES -->
+            <div class="input-group"><label>Mfg. Date</label><input type="date" id="medMfgDate"></div>
+            <div class="input-group"><label>Expiry Date</label><input type="date" id="medExpiryDate"></div>
+            
+            <button class="btn" onclick="addMedicine()">➕ Add Item</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Name</th><th>Company</th><th>Rates</th><th>Stock</th><th>Expiry</th><th>Action</th></tr></thead>
+              <tbody id="medicinesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Companies -->
+        <div id="tab-companies" class="sub-section">
+          <div class="form-box">
+            <div class="input-group"><label>Company Name</label><input type="text" id="compName" placeholder="e.g. Sami"></div>
+            <button class="btn" onclick="addCompany()">➕ Add Company</button>
+          </div>
+          <div class="table-container">
+            <table><thead><tr><th>Company Name</th><th>Action</th></tr></thead><tbody id="companiesTableBody"></tbody></table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Distributors -->
+        <div id="tab-distributors" class="sub-section">
+          <div class="form-box" style="align-items: flex-start;">
+            <div class="input-group"><label>Distributor Name</label><input type="text" id="distName" placeholder="e.g. Sameel Enterprise"></div>
+            <div class="input-group"><label>Select Companies (Hold Ctrl)</label><select id="distCompanies" multiple style="height: 100px;"></select></div>
+            <button class="btn" onclick="addDistributor()">➕ Add Distributor</button>
+          </div>
+          <div class="table-container">
+            <table><thead><tr><th>Distributor Name</th><th>Companies</th><th>Action</th></tr></thead><tbody id="distributorsTableBody"></tbody></table>
+          </div>
+        </div>
+
+        <!-- Tab 4: Customers -->
+        <div id="tab-customers" class="sub-section">
+          <div class="form-box">
+            <div class="input-group"><label>Name</label><input type="text" id="custName" placeholder="e.g. Abdul Rehman"></div>
+            <div class="input-group"><label>Phone</label><input type="text" id="custPhone" placeholder="e.g. 03001234567"></div>
+            <div class="input-group"><label>Discount (%)</label><input type="number" id="custDiscount" placeholder="e.g. 5" min="0" max="100"></div>
+            <button class="btn" onclick="addCustomer()">➕ Add Customer</button>
+          </div>
+          <div class="table-container">
+            <table><thead><tr><th>Name</th><th>Phone</th><th>Discount</th><th>Total Purchases</th><th>Action</th></tr></thead><tbody id="customersTableBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS PAGE (TABS WALA) -->
+      <div id="page-reports" class="hidden">
+        <div class="header">
+          <h1>Reports & Alerts</h1>
+          <div class="profile">
+            <span id="user-display-rep">👤 Admin</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+
+        <div class="top-tabs">
+          <button class="tab-btn active" onclick="openTab('reports', 'tab-profit', this)">💰 Profit Reports</button>
+          <button class="tab-btn" onclick="openTab('reports', 'tab-alerts', this)">⚠️ Stock & Expiry Alerts</button>
+        </div>
+
+        <!-- Tab 1: Profit -->
+        <div id="tab-profit" class="sub-section active">
+          <div class="cards-container" style="margin-bottom: 20px;">
+            <div class="card sale"><div class="card-icon">💵</div><h3>Total Sales</h3><p id="ana-total-sale">Rs. 0</p></div>
+            <div class="card purchase"><div class="card-icon">🛒</div><h3>Total Purchase Cost</h3><p id="ana-total-purchase">Rs. 0</p></div>
+            <div class="card profit"><div class="card-icon">📈</div><h3>Total Net Profit</h3><p id="ana-total-profit">Rs. 0</p></div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Company</th><th>Items Sold</th><th>Total Purchase Cost</th><th>Total Sales</th><th>Net Profit</th></tr></thead>
+              <tbody id="supplierProfitTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Alerts (Stock + Expiry) -->
+        <div id="tab-alerts" class="sub-section">
+          <div class="table-container">
+            <h3 style="margin-bottom: 15px; color:#e53e3e;">⚠️ Items running low or expiring soon</h3>
+            <table>
+              <thead><tr><th>Item Name</th><th>Stock Status</th><th>Expiry Status</th></tr></thead>
+              <tbody id="alertsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIG PAGE -->
+      <div id="page-config" class="hidden">
+        <div class="header"><h1>System Configuration</h1></div>
+        <div class="table-container">
+          <div style="display: flex; flex-direction: column; gap: 15px;">
+            <button class="btn" style="background:#4a5568;" onclick="showToast('Password Change Screen', 'success')">Change User Password</button>
+            <button class="btn" style="background:#4a5568;" onclick="showToast('Backup Saved', 'success')">Backup Database</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP INFO PAGE -->
+      <div id="page-info" class="hidden">
+        <div class="header"><h1>About Software</h1></div>
+        <div class="table-container">
+          <div class="dev-profile">
+            <div class="dev-avatar">A</div>
+            <div>
+              <h2 style="color: #2d3748; margin-bottom: 5px;">Muhammad Abdul Rehman</h2>
+              <p style="color: #718096; font-size: 16px;">Lead Developer & Software Engineer</p>
+              <p style="color: #718096; font-size: 14px;">BS Software Engineering (Riphah International University, Faisalabad)</p>
+            </div>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 20px 0;">
+          <div style="font-size: 16px; color: #4a5568; line-height: 1.8;">
+            <p><b>Software Name:</b> Ali Medical Store - Management System</p>
+            <p><b>Version:</b> 1.2.0</p>
+            <p style="color: #718096; font-style: italic;">"Designed and developed with dedication."</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HIDDEN PRINT RECEIPT -->
+  <div id="print-receipt">
+    <div class="receipt-header">
+      <h2>ALI MEDICAL STORE</h2>
+      <p>Main Bazaar, Faisalabad</p>
+      <p>Ph: 0300-1234567</p>
+    </div>
+    <div class="receipt-info">
+      <div><span>Date:</span> <span id="print-date"></span></div>
+      <div><span>Invoice #:</span> <span id="print-inv"></span></div>
+      <div><span>Customer:</span> <span id="print-cust-name"></span></div>
+      <div><span>Cust ID:</span> <span id="print-cust-id"></span></div>
+    </div>
+    <table class="receipt-table">
+      <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+      <tbody id="print-receipt-body"></tbody>
+    </table>
+    <div class="receipt-totals">
+      <div><span>Sub Total:</span> <span>Rs. <span id="print-subtotal"></span></span></div>
+      <div><span>Discount:</span> <span>Rs. <span id="print-discount"></span></span></div>
+      <div class="grand-total"><span>NET TOTAL:</span> <span>Rs. <span id="print-grandtotal"></span></span></div>
+    </div>
+    <div class="receipt-footer">
+      <p>Thank you for shopping!</p>
+      <p>Software by Abdul Rehman</p>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT -->
+  <script src="script.js" defer></script>
+</body>
+</html>
